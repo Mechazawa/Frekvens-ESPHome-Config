@@ -1,0 +1,474 @@
+esphome:
+  name: frekvens-cube-2
+  includes:
+    - gol.hpp
+    - frekvens-panel-patch.hpp
+  on_boot:
+    then:
+      - lambda: |-
+          gol.randomize();
+  platformio_options:
+    upload_speed: 115200
+    lib_deps:
+      - Wire                        # Also required by GFX.
+      - SPI                         # Also required by GFX.
+      - adafruit/Adafruit BusIO     # Required by GFX Library.
+      - me-no-dev/ESPAsyncTCP
+      - adafruit/Adafruit GFX Library   # Required for FrekvensPanel.
+      # - Adafruit BusIO                  # Required by GFX Library?
+
+
+esp8266:
+  board: esp01_1m
+
+external_components:
+  - source:
+      type: local
+      path: /config/.esphome/custom_components
+
+# Enable logging
+logger:
+
+web_server:
+  port: 80
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "YLnQEyYNVNQkrMSqPl+st4cXSkbfrMdVt6hvT87pdn4="
+
+ota:
+  password: "931474bce53de044657644c57a1f79fe"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Frekvens-Cube-2 Fallback Hotspot"
+    password: "nbNYQsg9rbkK"
+  manual_ip:
+    static_ip: 172.16.3.36
+    gateway: 71.16.0.1
+    subnet: 255.255.0.0
+
+captive_portal:
+    
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+text_sensor:
+  - platform: homeassistant
+    id: pixel_data
+    name: "Pixel Data"
+    entity_id: input_text.frekvens_cube_2_pixel_data
+
+number:
+  - platform: template
+    name: "Simulation Speed (ms)"
+    id: simulation_speed
+    optimistic: true
+    initial_value: 1000
+    min_value: 100
+    max_value: 10000
+    step: 100
+
+select:
+  - platform: template
+    name: "Simulation Edge"
+    optimistic: true
+    options:
+      - Wrap
+      - Always On
+      - Always Off
+    on_value:
+      then:
+        lambda: |-
+          switch(i) {
+            case 0:
+              gol.edgeAction = EdgeAction::Wrap;
+              break;
+            case 1:
+              gol.edgeAction = EdgeAction::AlwaysOn;
+              break;
+            case 2:
+              gol.edgeAction = EdgeAction::AlwaysOff;
+              break;
+          }
+  - platform: template
+    name: "Simulation Mode"
+    optimistic: true
+    options:
+      - Game of Life
+      - 2x2
+      - 34 Life
+      - Amoeba
+      - Assimilation
+      - Coagulations
+      - Coral
+      - Day & Night
+      - Diamoeba
+      - Flakes
+      - Gnarl
+      - HighLife
+      - InverseLife
+      - Long Life
+      - Maze
+      - Maze (mice)
+      - Mazectric
+      - Move
+      - Psuedo life
+      - Replicator
+      - Seeds
+      - Serviettes
+      - Stains
+      - WalledCities
+    on_value:
+      then:
+        - lambda: |-
+            switch(i) {
+              case 0:
+                ESP_LOGD("game", "Set mode to Game of Life");
+                gol.setRulesS((const unsigned char[]){2, 3}, 2);
+                gol.setRulesB((const unsigned char[]){3}, 1);
+                break;
+              case 1: 
+                ESP_LOGD("game", "Set mode to 2x2");
+                gol.setRulesS((const unsigned char[]){1, 2, 5}, 3);
+                gol.setRulesB((const unsigned char[]){3, 6}, 2);
+                break;
+              case 2:
+                ESP_LOGD("game", "Set mode to 34 Life");
+                gol.setRulesS((const unsigned char[]){2, 3}, 2);
+                gol.setRulesB((const unsigned char[]){3}, 1);
+                break;
+              case 3: 
+                ESP_LOGD("game", "Set mode to Amoeba");
+                gol.setRulesS((const unsigned char[]){1, 3, 5, 8}, 4);
+                gol.setRulesB((const unsigned char[]){3, 5, 7}, 3);
+                break;
+              case 4: 
+                ESP_LOGD("game", "Set mode to Assimilation");
+                gol.setRulesS((const unsigned char[]){4, 5, 6, 7}, 4);
+                gol.setRulesB((const unsigned char[]){3, 4, 5}, 3);
+                break;
+              case 5: 
+                ESP_LOGD("game", "Set mode to Coagulations");
+                gol.setRulesS((const unsigned char[]){2, 3, 5, 6, 7, 8}, 6);
+                gol.setRulesB((const unsigned char[]){3, 7, 8}, 3);
+                break;
+              case 6: 
+                ESP_LOGD("game", "Set mode to Coral");
+                gol.setRulesS((const unsigned char[]){4, 5, 6, 7, 8}, 5);
+                gol.setRulesB((const unsigned char[]){3}, 1);
+                break;
+              case 7: 
+                ESP_LOGD("game", "Set mode to Day & Night");
+                gol.setRulesS((const unsigned char[]){3, 4, 6, 7, 8}, 5);
+                gol.setRulesB((const unsigned char[]){3, 6, 7, 8}, 4);
+                break;
+              case 8: 
+                ESP_LOGD("game", "Set mode to Diamoeba");
+                gol.setRulesS((const unsigned char[]){5, 6, 7, 8}, 4);
+                gol.setRulesB((const unsigned char[]){3, 5, 6, 7, 8}, 5);
+                break;
+              case 9: 
+                ESP_LOGD("game", "Set mode to Flakes");
+                gol.setRulesS((const unsigned char[]){0, 1, 2, 3, 4, 5, 6, 7, 8}, 9);
+                gol.setRulesB((const unsigned char[]){3}, 1);
+                break;
+              case 10: 
+                ESP_LOGD("game", "Set mode to Gnarl");
+                gol.setRulesS((const unsigned char[]){1}, 1);
+                gol.setRulesB((const unsigned char[]){1}, 1);
+                break;
+              case 11: 
+                ESP_LOGD("game", "Set mode to HighLife");
+                gol.setRulesS((const unsigned char[]){2, 3}, 2);
+                gol.setRulesB((const unsigned char[]){3, 6}, 2);
+                break;
+              case 12: 
+                ESP_LOGD("game", "Set mode to InverseLife");
+                gol.setRulesS((const unsigned char[]){3, 4, 6, 7, 8}, 5);
+                gol.setRulesB((const unsigned char[]){0, 1, 2, 3, 4, 7, 8}, 7);
+                break;
+              case 13: 
+                ESP_LOGD("game", "Set mode to Long Life");
+                gol.setRulesS((const unsigned char[]){5}, 5);
+                gol.setRulesB((const unsigned char[]){3, 4, 5}, 3);
+                break;
+              case 14: 
+                ESP_LOGD("game", "Set mode to Maze");
+                gol.setRulesS((const unsigned char[]){1, 2, 3, 4, 5}, 5);
+                gol.setRulesB((const unsigned char[]){3}, 1);
+                break;
+              case 15: 
+                ESP_LOGD("game", "Set mode to Maze (mice)");
+                gol.setRulesS((const unsigned char[]){1, 2, 3, 4, 5}, 5);
+                gol.setRulesB((const unsigned char[]){3, 7}, 2);
+                break;
+              case 16: 
+                ESP_LOGD("game", "Set mode to Mazectric");
+                gol.setRulesS((const unsigned char[]){1, 2, 3, 4}, 4);
+                gol.setRulesB((const unsigned char[]){3}, 1);
+                break;
+              case 17: 
+                ESP_LOGD("game", "Set mode to Move");
+                gol.setRulesS((const unsigned char[]){2, 4, 5}, 3);
+                gol.setRulesB((const unsigned char[]){3, 6, 8}, 3);
+                break;
+              case 18: 
+                ESP_LOGD("game", "Set mode to Psuedo Life");
+                gol.setRulesS((const unsigned char[]){2, 3, 8}, 3);
+                gol.setRulesB((const unsigned char[]){3, 5, 7}, 3);
+                break;
+              case 19: 
+                ESP_LOGD("game", "Set mode to Replicator");
+                gol.setRulesS((const unsigned char[]){1, 3, 5, 7}, 4);
+                gol.setRulesB((const unsigned char[]){1, 3, 5, 7}, 4);
+                break;
+              case 20: 
+                ESP_LOGD("game", "Set mode to Seeds");
+                gol.setRulesS((const unsigned char[]){}, 0);
+                gol.setRulesB((const unsigned char[]){2}, 1);
+                break;
+              case 21: 
+                ESP_LOGD("game", "Set mode to Serviettes");
+                gol.setRulesS((const unsigned char[]){}, 0);
+                gol.setRulesB((const unsigned char[]){2, 3, 4}, 3);
+                break;
+              case 22: 
+                ESP_LOGD("game", "Set mode to Stains");
+                gol.setRulesS((const unsigned char[]){2, 3, 5, 6, 7, 8}, 6);
+                gol.setRulesB((const unsigned char[]){3, 6, 7, 8}, 4);
+                break;
+              case 23: 
+                ESP_LOGD("game", "Set mode to Walled Cities");
+                gol.setRulesS((const unsigned char[]){2, 3, 4, 5}, 4);
+                gol.setRulesB((const unsigned char[]){4, 5, 6, 7, 8}, 5);
+                break;
+              default:
+                ESP_LOGW("game", "Unknown game index %i", i);
+                break;
+            }
+
+button:
+  - platform: template
+    name: "Apply Pixel Data"
+    on_press:
+      - switch.turn_on: gol_disabled
+      - display.page.show: page0
+      - lambda: |-
+          ESP_LOGD("main", "Got data '%s'", id(pixel_data).state.c_str());
+          
+          auto data = id(pixel_data).state;
+          
+          for (int x = 0; x < gol.getWidth(); x++) {
+            for (int y = 0; y < gol.getHeight(); y++) {
+              int index = x + (y * gol.getHeight());
+              if (index >= data.size()) {
+                gol.setCell(x, y, false);
+              } else {
+                gol.setCell(x, y, data[index] == '1');
+              }
+            }
+          }
+      - logger.log: "Updated screen based on HA pixel data"
+
+light:
+  - platform: monochromatic
+    name: 'Brightness'
+    id: brightness
+    output: matrix_brightness
+    restore_mode: RESTORE_DEFAULT_ON
+
+output:
+  - platform: esp8266_pwm
+    # Enables brightness control.
+    id: matrix_brightness
+    pin:
+      number: GPIO12
+      inverted: True
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO16
+    id: change_mode_button
+    name: "Change Mode Button"
+    on_multi_click:
+    - timing:
+        - ON for at most 0.6s
+        - OFF for at least 0.2s
+      then:
+        - if:
+            condition:
+              and:
+                - display.is_displaying_page: page0
+                - switch.is_on: gol_disabled
+            then:
+              - switch.turn_off: gol_disabled
+              - logger.log: "Enable Game of Life"
+            else:
+              - display.page.show_next: matrix_display
+    - timing:
+        - ON for at most 0.6s
+        - OFF for at most 0.5s
+        - ON for at most 0.6s
+        - OFF for at least 0.2s
+      then:
+        - if:
+            condition:
+              and:
+                - display.is_displaying_page: page0
+            then:
+              - switch.turn_off: gol_disabled
+              - logger.log: "Enable Game of Life"
+              - display.page.show_next: matrix_display
+    - timing:
+        - ON for at least 0.6s
+        # - OFF for at least 0.2s
+      then:
+        - if:
+            condition:
+              and:
+                - display.is_displaying_page: page0
+            then:
+              - logger.log: "Randomize Game of Life"
+              - lambda: |-
+                 gol.randomize();
+              - switch.turn_off: gol_disabled
+        - if:
+            condition:
+              not: 
+                display.is_displaying_page: page0
+            then:
+              - logger.log: "Copy frame for Game of Life"
+              - lambda: |-
+                 for (int x = 0; x < gol.getWidth(); x++) {
+                   for (int y = 0; y < gol.getHeight(); y++) {
+                     gol.setCell(x, y, id(matrix_display)->get_pixel(x, y));
+                   }
+                 }
+              - display.page.show: page0
+              - switch.turn_off: gol_disabled
+          
+  - platform: gpio
+    pin: GPIO14
+    id: toggle_power_button
+    name: "Toggle Power Button"
+    internal: true
+    on_click:
+      then:
+        - if:
+            condition:
+              light.is_off: brightness
+            then:
+              light.turn_on: 
+                id: brightness
+                brightness: 1.0
+            else:
+              light.turn_off: brightness
+    on_press:
+      then:
+      - if:
+          condition: 
+            light.is_off: brightness
+          then:
+          - delay: 0.5s
+          - while:
+              condition:
+                binary_sensor.is_on: toggle_power_button
+              then:
+                - light.dim_relative:
+                    id: brightness
+                    relative_brightness: 5%
+                    transition_length: 0.1s
+                - delay: 0.1s
+          else:
+          - delay: 0.5s
+          - while:
+              condition:
+                and:
+                  - binary_sensor.is_on: toggle_power_button
+                  - light.is_on: brightness
+              then:
+                - light.dim_relative:
+                    id: brightness
+                    relative_brightness: -5%
+                    transition_length: 0.1s
+                - delay: 0.1s
+                
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: 'Europe/Amsterdam'
+    
+display:
+  - platform: frekvens_panel
+    id: matrix_display
+    latch_pin: 0
+    clock_pin: 4
+    data_pin: 5
+    update_interval: 200ms
+
+    pages:
+      - id: page0
+        lambda: |-
+          for (int y = 0; y < gol.getHeight(); y++) {
+            for (int x = 0; x < gol.getWidth(); x++) {
+              bool alive = gol.getCell(x, y);
+            
+              it.draw_pixel_at(x, y, alive ? COLOR_ON : COLOR_OFF);
+            }
+          }
+      - id: page1
+        lambda: |-
+          it.printf(1, 1, id(b03), "Luv");
+          it.printf(1, 8, id(b03), "You");
+      - id: page2
+        lambda: |-
+          it.printf(1, 5, id(b03), "BOO!");
+      - id: page3
+        lambda: |-
+          auto time = id(homeassistant_time).now();
+          
+          it.strftime(1, 2, id(b03), "%H", time);
+          it.strftime(6, 8, id(b03), "%M", time);
+
+switch:
+  - platform: template
+    name: "Game of Life paused"
+    id: gol_disabled
+    optimistic: true
+
+globals:
+  - id: last_tick
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+interval:
+  - interval: 
+      milliseconds: 100
+    then:
+      - lambda: |-
+          id(last_tick) += 100;
+      - if:
+          condition:
+            and:
+              - lambda: |-
+                  return id(last_tick) >= id(simulation_speed).state;
+              - display.is_displaying_page: page0
+              - switch.is_off: gol_disabled
+          then:
+            - lambda: |-
+                gol.tick();
+                id(last_tick) = 0;
+
+font:
+  - file: "04B03.ttf"
+    id: b03
+    size: 8
